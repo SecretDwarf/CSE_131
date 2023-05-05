@@ -5,9 +5,14 @@
 # 3. Assignment Description:
 #      Code to play the game of Tic-Tac-Toe.
 # 4. What was the hardest part? Be as specific as possible.
-#      -a paragraph or two about how the assignment went for you-
+#      The hardest part of this lab was handling the Dictionary data. I have more expirence with lists but after a while I learned about the .values() method. I also learned about how try except blocks and the ecept valueError proporty. 
 # 5. How long did it take for you to complete the assignment?
-#      -total time in hours including reading the assignment and submitting the program-
+#      This project took me about 3.5 hours to complete.
+#sources:
+    # I used this site to help fix a problem with my board
+        # https://www.geeksforgeeks.org/python-program-to-change-values-in-a-dictionary/#
+    # I used this source to better understand try except blocks and add the value error
+        # https://www.pythontutorial.net/python-basics/python-try-except/
 
 import json
 
@@ -21,11 +26,11 @@ BLANK = ' '
 # it is only used to reset the board to blank. This should be the format
 # of the code in the JSON file.
 blank_board = {  
-            "board": [
-                BLANK, BLANK, BLANK,
-                BLANK, BLANK, BLANK,
-                BLANK, BLANK, BLANK ]
+            1: BLANK, 2: BLANK, 3: BLANK,
+            4: BLANK, 5: BLANK, 6: BLANK,
+            7: BLANK, 8: BLANK, 9: BLANK 
         }
+
 def read_board():
     '''Read the previously existing board from the file if it exists.'''
     board_read = False
@@ -36,34 +41,21 @@ def read_board():
         board = blank_board
     return board
 
-def save_board(board):
+def save_board(positions):
     '''Save the current game to a file.'''
-    board = json.dumps(board)
+    new_board = {1: positions[0],2:positions[1],3: positions[2],4: positions[3],5: positions[4],6: positions[5],7: positions[6],8: positions[7],9: positions[8]}
+    board = json.dumps(new_board)
     with open("TickTacToe.json", "w") as file:
         file.write(board)
 
-def display_board(board):
+def display_board(positions):
     '''Display a Tic-Tac-Toe board on the screen in a user-friendly way.'''
-    # I had to google the list operator but lost the resource link
-    positions = list(board.values())
-
-    print(positions)
     print("The current board is: \n")
-
-    positionOne = positions[0]
-    positionTwo = positions[1]
-    positionThree = positions[2]
-    positionFour = positions[3]
-    positionFive = positions[4]
-    positionSix = positions[5]
-    positionSeven = positions[6]
-    positionEight = positions[7]
-    positionNine = positions[8]
-    print(f" {positionOne} | {positionTwo} | {positionThree} ")
+    print(f" {positions[0]} | {positions[1]} | {positions[2]} ")
     print("---+---+---")
-    print(f" {positionFour} | {positionFive} | {positionSix} ")
+    print(f" {positions[3]} | {positions[4]} | {positions[5]} ")
     print(f"---+---+---")
-    print(f" {positionSeven} | {positionEight} | {positionNine} \n")
+    print(f" {positions[6]} | {positions[7]} | {positions[8]} ")
 
 def is_x_turn(turn):
     '''Determine whose turn it is.'''
@@ -75,66 +67,65 @@ def is_x_turn(turn):
 def play_game(board):
     '''Play the game of Tic-Tac-Toe.'''
     turn = 1
-    is_playing = True
-    while is_playing == True:
-        display_board(board)
+    positions = list(board.values())
+    display_board(positions)
+    while game_done(positions) == False:
         turn += 1
         if is_x_turn(turn) == True:
             user_turn = X
         else: 
             user_turn = O
-        keypress = input(f"{user_turn}, input a number bettween 1 and 9: ")
         try:
-            if type(keypress) == int:
-                position = int(keypress) - 1
-                board[position] = user_turn
-                display_board()
-        except:
-            display_board()
-            if type(keypress) == "string":
-                save_board(board)
-                break
-        print(type(keypress))
+            keypress = int(input(f"{user_turn}, input a number bettween 1 and 9: "))
+            position = keypress
+            positions[position-1] = user_turn
+        except ValueError: 
+            save_board(positions)
+            break 
+        display_board(positions)
 
     return False
 
-def game_done(board, message=False):
+def game_done(positions, message=False):
     '''Determine if the game is finished.
        Note that this function is provided as-is.
        You do not need to edit it in any way.
-       If message == True, then we display a message to the user.
+       If message == Tr4
+       ue, then we display a message to the user.
        Otherwise, no message is displayed. '''
 
     # Game is finished if someone has completed a row.
     for row in range(3):
-        if board[row * 3] != BLANK and board[row * 3] == board[row * 3 + 1] == board[row * 3 + 2]:
+        if positions[row * 3] != BLANK and positions[row * 3] == positions[row * 3 + 1] == positions[row * 3 + 2]:
             if message:
-                print("The game was won by", board[row * 3])
+                print("The game was won by", positions[row * 3])
             return True
 
     # Game is finished if someone has completed a column.
     for col in range(3):
-        if board[col] != BLANK and board[col] == board[3 + col] == board[6 + col]:
+        if positions[col] != BLANK and positions[col] == positions[3 + col] == positions[6 + col]:
             if message:
-                print("The game was won by", board[col])
+                print("The game was won by", positions[col])
             return True
 
     # Game is finished if someone has a diagonal.
-    if board[4] != BLANK and (board[0] == board[4] == board[8] or
-                              board[2] == board[4] == board[6]):
+    if positions[4] != BLANK and (positions[0] == positions[4] == positions[8] or
+                              positions[2] == positions[4] == positions[6]):
         if message:
-            print("The game was won by", board[4])
+            print("The game was won by", positions[4])
         return True
 
     # Game is finished if all the squares are filled.
     tie = True
-    for square in board:
+    for square in positions:
         if square == BLANK:
             tie = False
     if tie:
         if message:
             print("The game is a tie!")
         return True
+    positions = (BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK)
+    save_board(positions)
 
 
     return False
@@ -149,4 +140,5 @@ print("---+---+---")
 print(" 7 | 8 | 9 \n")
 
 # The file read code, game loop code, and file close code goes here.
+read_board()
 play_game(read_board())
