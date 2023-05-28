@@ -1,5 +1,5 @@
 # 1. Name:
-#      -your name-
+#      Jacob Briggs
 # 2. Assignment Name:
 #      Lab 03 : Calendar Program
 # 3. Assignment Description:
