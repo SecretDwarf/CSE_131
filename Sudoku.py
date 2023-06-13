@@ -34,13 +34,9 @@ def get_board():
                 print(f"Invalid difficulty level: {difficulty}. Please enter a valid difficulty level.")
     return board
 
-game = None
-def save_board(board):
-    global game
-    if not game:
-        game = input("Enter the name of the file to save changes to: ")
+def save_board(board, game_name):
     board = json.dumps(board)
-    with open(f"{game}.json", "w") as file:
+    with open(f"{game_name}.json", "w") as file:
         file.write(board)
 
 def create_board(board_dict):
@@ -100,11 +96,12 @@ def is_valid_move(board, key, value):
 
     return True
 
-def display_board(board, possibilities):
+def display_board(board):
     """
     Print the current state of the board.
     """
     # Print the column labels
+    print("Current board: ")
     print("  A B C   D E F   G H I")
     print()
     # Loop through each row
@@ -126,7 +123,7 @@ def display_board(board, possibilities):
             else:
                 row += str(board[chr(64+j) + str(i)]) + ' '
         # Add a horizontal separator between blocks
-        if i == 3 or i == 6:
+        if i == 4 or i == 7:
             print('  - - - + - - - + - - -')
         # Print the row
         print(row)
@@ -199,18 +196,19 @@ def solve_board(board, possibilities):
         # Eliminate possibilities based on the current state of the board
         for row in range(1, 10):
             for col in range(1, 10):
-                if len(possibilities[chr(64+col) + str(row)]) > 1:
+                key = chr(64+col) + str(row)
+                if len(possibilities[key]) > 1:
                     # Check the row
                     for c in range(1, 10):
                         if c != col and len(possibilities[chr(64+c) + str(row)]) == 1:
-                            if possibilities[chr(64+c) + str(row)][0] in possibilities[chr(64+col) + str(row)]:
-                                possibilities[chr(64+col) + str(row)].remove(possibilities[chr(64+c) + str(row)][0])
+                            if possibilities[chr(64+c) + str(row)][0] in possibilities[key]:
+                                possibilities[key].remove(possibilities[chr(64+c) + str(row)][0])
                                 progress = True
                     # Check the column
                     for r in range(1, 10):
                         if r != row and len(possibilities[chr(64+col) + str(r)]) == 1:
-                            if possibilities[chr(64+col) + str(r)][0] in possibilities[chr(64+col) + str(row)]:
-                                possibilities[chr(64+col) + str(row)].remove(possibilities[chr(64+col) + str(r)][0])
+                            if possibilities[chr(64+col) + str(r)][0] in possibilities[key]:
+                                possibilities[key].remove(possibilities[chr(64+col) + str(r)][0])
                                 progress = True
                     # Check the block
                     block_row = (row - 1) // 3 * 3 + 1
@@ -218,19 +216,22 @@ def solve_board(board, possibilities):
                     for r in range(block_row, block_row+3):
                         for c in range(block_col, block_col+3):
                             if r != row and c != col and len(possibilities[chr(64+c) + str(r)]) == 1:
-                                if possibilities[chr(64+c) + str(r)][0] in possibilities[chr(64+col) + str(row)]:
-                                    possibilities[chr(64+col) + str(row)].remove(possibilities[chr(64+c) + str(r)][0])
+                                if possibilities[chr(64+c) + str(r)][0] in possibilities[key]:
+                                    possibilities[key].remove(possibilities[chr(64+c) + str(r)][0])
                                     progress = True
 
         # If no progress was made during this iteration, try guessing a value for a cell with the fewest number of possibilities
         if not progress:
-            min_possibilities = min([len(v) for v in possibilities.values() if len(v) > 1])
+            min_possibilities = min([len(v) for v in possibilities.values() if len(v) > 1], default=0)
+            if min_possibilities == 0:
+                return None
             for key in possibilities.keys():
                 if len(possibilities[key]) == min_possibilities:
                     for value in possibilities[key]:
                         new_board = board.copy()
                         new_board[key] = value
-                        result = solve_board(board)
+                        new_possibilities = get_possibilities(new_board)
+                        result = solve_board(new_board, new_possibilities)
                         if result is not None:
                             return result
                     return None
@@ -254,6 +255,7 @@ def menu(board, possibilities):
         print("4. See Solution")
         choice = input("Enter your choice: ")
         if choice == '1':
+            display_board(board)
             valid_input = False
             while not valid_input:
                 key = input("Enter a key (ex. A1) to add a number: ")
@@ -262,7 +264,7 @@ def menu(board, possibilities):
                     if board[key] <= 0:
                         valid_input = True
                     else:
-                        print("This cell already has a positive value. Try again.")
+                        print("This cell already has a given value. Try again.")
                 else:
                     print("Invalid input. Try again.")
             num = int(input("Enter a number to add to the board: "))
@@ -270,28 +272,30 @@ def menu(board, possibilities):
                 board[key] = -num
             else:
                 print("Invalid input. Try again.")
-            save_board(board)
-            display_board(board, get_possibilities(board))
+            save_board(board, game_name)
+            display_board(board)
         elif choice == '2':
             display_possibilities(possibilities)
         elif choice == '3':
-            save_board(board)
+            save_board(board, game_name)
+            return True
             break
         elif choice == '4':
             solve_board(board, get_possibilities(board))
+            display_board(board)
             # display_board(board, get_possibilities(board))
             break
-
 def play_game():
     """
     Play a game of Sudoku.
     """
     board = get_board()
-    save_board(board)
+    global game_name
+    game_name = input("What would you like this game saved as? ")
+    display_board(board)
     while not game_over(board):   
-        display_board(board, get_possibilities(board))
-        menu(board, get_possibilities(board))
-    display_board(board, get_possibilities(board))
-    print("Congratulations! You finished the game!")
+        if menu(board, get_possibilities(board)) == True:
+            break
+    print("Thank you for playing. Please come again soon.")
 
 play_game()
